@@ -1,0 +1,1460 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cherry Relation Mary — CRM</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#042C53;color:#fff;min-height:100vh}
+.app{display:flex;min-height:100vh}
+.sidebar{width:220px;min-width:220px;background:#042C53;border-right:1px solid #0C447C;padding:14px;display:flex;flex-direction:column;gap:3px;position:fixed;top:0;left:0;height:100vh;overflow-y:auto}
+.nav-logo{font-size:14px;font-weight:600;color:#fff;padding:6px 8px 12px;border-bottom:1px solid #0C447C;margin-bottom:8px;display:flex;align-items:center;gap:8px}
+.nav-logo span{font-size:11px;font-weight:400;color:#85B7EB;display:block;margin-top:2px}
+.nav-section{font-size:10px;color:#378ADD;padding:8px 8px 3px;text-transform:uppercase;letter-spacing:0.06em}
+.nav-item{padding:10px 12px;border-radius:8px;cursor:pointer;font-size:13px;color:#B5D4F4;display:flex;align-items:center;gap:8px;transition:background 0.15s;background:#1a3a5c;border:1px solid #0C447C;margin-bottom:4px;font-weight:500}
+.nav-item.active{background:#185FA5;color:#fff;border:1px solid #378ADD}
+.nav-item:hover:not(.active){background:#0C447C;color:#fff}
+.dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.edit-toggle{margin-top:auto;padding-top:12px;border-top:1px solid #0C447C}
+.edit-btn{width:100%;padding:9px 10px;border-radius:8px;border:1px solid #0C447C;background:#0C447C;cursor:pointer;font-size:12px;font-weight:500;color:#85B7EB;display:flex;align-items:center;gap:8px}
+.edit-btn.active{background:#185FA5;border-color:#378ADD;color:#fff}
+
+.topbar{background:#042C53;border-bottom:2px solid #0C447C;padding:0 16px;height:54px;display:flex;align-items:center;justify-content:space-between;position:fixed;top:0;left:220px;right:0;z-index:50}
+.topbar-edit-btn{padding:7px 16px;background:#0C447C;border:1px solid #185FA5;border-radius:8px;font-size:12px;font-weight:500;color:#85B7EB;cursor:pointer}
+.topbar-edit-btn.active{background:#185FA5;color:#fff;border-color:#378ADD}
+.topbar-avatar{width:34px;height:34px;border-radius:50%;background:#185FA5;color:#fff;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;cursor:pointer;flex-shrink:0}
+.main{flex:1;margin-left:220px;padding:20px;padding-top:74px;max-width:960px;background:#042C53}
+
+.editable{cursor:default;border-radius:4px;transition:background 0.15s;outline:none}
+body.edit-mode .editable{background:#fffbe6;border:1px dashed #EF9F27;padding:2px 4px;cursor:text}
+body.edit-mode .editable:focus{background:#fff9e0;border-color:#BA7517;box-shadow:0 0 0 2px rgba(186,117,23,0.15)}
+.edit-banner{display:none;background:#FAEEDA;border:1px solid #EF9F27;border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:13px;color:#633806;align-items:center;justify-content:space-between}
+body.edit-mode .edit-banner{display:flex}
+.save-content-btn{padding:7px 14px;background:#BA7517;color:#fff;border:none;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer}
+.fiche{display:none}
+.fiche.active{display:block}
+.fiche-header{border-radius:12px;padding:16px 18px;margin-bottom:16px}
+.fiche-header.conc{background:#0C447C;border:1px solid #185FA5;border-left:4px solid #5DCAA5}
+.fiche-header.ser{background:#0C447C;border:1px solid #185FA5;border-left:4px solid #EF9F27}
+.fiche-title{font-size:18px;font-weight:600;margin-bottom:3px}
+.fiche-title.conc{color:#5DCAA5}
+.fiche-title.ser{color:#FAC775}
+.fiche-sub{font-size:12px}
+.fiche-sub.conc{color:#9FE1CB}
+.fiche-sub.ser{color:#FAC775}
+.section{margin-bottom:18px}
+.section-label{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.07em;color:#85B7EB;margin-bottom:8px;padding-bottom:5px;border-bottom:1px solid #0C447C}
+.accroche-box{background:#0C447C;border:1px solid #185FA5;border-radius:10px;padding:13px 15px;font-size:14px;color:#E6F1FB;line-height:1.7;font-style:italic}
+.args-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.arg-card{background:#0C447C;border:1px solid #185FA5;border-radius:10px;padding:12px 14px}
+.arg-card.conc{border-left:3px solid #1D9E75}
+.arg-card.ser{border-left:3px solid #BA7517}
+.arg-card.info{border-left:3px solid #378ADD}
+.arg-name{font-size:11px;font-weight:600;margin-bottom:5px;text-transform:uppercase;letter-spacing:0.04em}
+.arg-name.conc{color:#085041}
+.arg-name.ser{color:#fff}
+.arg-name.info{color:#0C447C}
+.arg-comm{font-size:16px;font-weight:600;margin-bottom:5px}
+.arg-comm.conc{color:#1D9E75}
+.arg-comm.ser{color:#BA7517}
+.arg-items{font-size:12px;color:#B5D4F4;line-height:1.75}
+.arg-items .ok::before{content:"✓ ";color:#1D9E75;font-weight:600}
+.note{margin-top:7px;font-size:11px;font-style:italic;color:#85B7EB}
+.obj-list{display:flex;flex-direction:column;gap:7px}
+.obj-item{background:#0C447C;border:1px solid #185FA5;border-radius:10px;padding:10px 14px;display:flex;gap:12px;align-items:flex-start}
+.obj-q{font-size:12px;font-weight:600;color:#fff;min-width:200px;max-width:200px;padding-top:1px}
+.obj-r{font-size:12px;color:#B5D4F4;line-height:1.6;flex:1}
+.conclu-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+.conclu-card{background:#0C447C;border:1px solid #185FA5;border-radius:10px;padding:12px;text-align:center}
+.conclu-icon{font-size:20px;margin-bottom:5px}
+.conclu-label{font-size:13px;font-weight:600;color:#fff;margin-bottom:4px}
+.conclu-action{font-size:11px;color:#85B7EB;line-height:1.55}
+.search-box{display:flex;gap:8px;margin-bottom:10px}
+.search-box input{flex:1;padding:9px 12px;font-size:13px;border:1px solid #B5D4F4;border-radius:8px;background:#fff;color:#444}
+.search-btn{padding:9px 16px;background:#1D9E75;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:500;cursor:pointer}
+.result-item{background:#0C447C;border:1px solid #185FA5;border-radius:8px;padding:10px 14px;margin-bottom:6px;cursor:pointer;display:flex;justify-content:space-between;align-items:center}
+.result-item:hover{border-color:#378ADD;background:#185FA5}
+.result-name{font-size:13px;font-weight:500;color:#fff}
+.result-info{font-size:12px;color:#85B7EB}
+.result-badge{font-size:11px;padding:2px 8px;border-radius:10px;background:#E1F5EE;color:#085041}
+.form-group{display:flex;flex-direction:column;gap:5px;margin-bottom:12px}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.form-group label{font-size:12px;color:#85B7EB;font-weight:500}
+.form-group input,.form-group select{width:100%;padding:9px 11px;font-size:13px;border:1px solid #B5D4F4;border-radius:8px;background:#fff;color:#444;outline:none}
+.form-group input:focus,.form-group select:focus{border-color:#185FA5}
+.ftag{display:inline-block;padding:4px 9px;border-radius:8px;font-size:11px;background:#0C447C;border:1px solid #185FA5;color:#85B7EB;margin:2px;cursor:pointer}
+.ftag.active{background:#E1F5EE;border-color:#5DCAA5;color:#085041}
+.save-btn{padding:11px 22px;background:#1D9E75;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;margin-top:8px}
+.save-btn:hover{background:#0F6E56}
+.formules-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.formule-card{background:#0C447C;border:1px solid #185FA5;border-radius:12px;padding:14px}
+.formule-card.hl{border:2px solid #1D9E75}
+.f-name{font-size:15px;font-weight:600;margin-bottom:2px}
+.f-comm{font-size:22px;font-weight:600;margin:7px 0}
+.f-desc{font-size:12px;color:#85B7EB;margin-bottom:9px}
+.f-svc{font-size:12px;color:#B5D4F4;line-height:1.8}
+.f-svc .ok::before{content:"✓ ";color:#1D9E75;font-weight:600}
+.modal-overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.4);z-index:1000;align-items:center;justify-content:center}
+.commercial-badge{display:flex;align-items:center;gap:6px;padding:5px 8px;border-radius:6px;background:#0C447C;border:1px solid #185FA5;cursor:pointer;margin-top:8px}
+.commercial-name{font-size:11px;font-weight:500;color:#fff}
+.commercial-change{font-size:10px;color:#85B7EB;text-decoration:underline}
+.modal-overlay.show{display:flex}
+.modal{background:#0C447C;border:1px solid #185FA5;border-radius:12px;padding:24px;width:300px;text-align:center}
+.modal h3{font-size:16px;font-weight:600;margin-bottom:6px;color:#fff}
+.modal p{font-size:13px;color:#85B7EB;margin-bottom:16px}
+.modal input{width:100%;padding:10px;font-size:16px;border:1px solid #B5D4F4;border-radius:8px;text-align:center;letter-spacing:4px;margin-bottom:12px;outline:none;background:#fff;color:#444}
+.modal-btn{width:100%;padding:10px;background:#1D9E75;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer}
+.modal-cancel{width:100%;padding:8px;background:none;border:none;font-size:13px;color:#85B7EB;cursor:pointer;margin-top:6px}
+.modal-error{font-size:12px;color:#E24B4A;margin-top:-8px;margin-bottom:8px;display:none}
+.page-title{font-size:16px;font-weight:600;color:#fff;margin-bottom:14px}
+@media(max-width:640px){
+  .sidebar{width:100%;height:auto;position:relative;flex-direction:row;flex-wrap:wrap;padding:10px;gap:4px}
+  .nav-logo{width:100%;padding:4px 6px 8px}
+  .nav-section{display:none}
+  .topbar{left:0;top:auto;bottom:0;border-top:2px solid #0C447C;border-bottom:none}
+  .main{margin-left:0;padding:14px;padding-bottom:70px}
+  .args-grid,.formules-grid,.conclu-grid,.form-row{grid-template-columns:1fr}
+  .obj-item{flex-direction:column;gap:4px}
+  .obj-q{min-width:unset;max-width:unset}
+  .app{flex-direction:column}
+}
+
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;margin-bottom:16px}
+.cal-header{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;margin-bottom:6px}
+.cal-day-name{text-align:center;font-size:11px;font-weight:600;color:#85B7EB;text-transform:uppercase;padding:4px}
+.cal-day{min-height:80px;background:#0C447C;border:1px solid #185FA5;border-radius:6px;padding:4px;cursor:pointer;position:relative}
+.cal-day:hover{border-color:#378ADD;background:#185FA5}
+.cal-day.today{border-color:#378ADD;border-width:2px}
+.cal-day.other-month{background:#042C53;opacity:0.5}
+.cal-day-num{font-size:11px;font-weight:500;color:#85B7EB;margin-bottom:3px}
+.cal-day.today .cal-day-num{color:#378ADD;font-weight:700}
+.cal-event{font-size:10px;padding:2px 5px;border-radius:3px;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer}
+.cal-event.rdv-physique{background:#E6F1FB;color:#0C447C;border-left:2px solid #185FA5}
+.cal-event.rdv-telephone{background:#E1F5EE;color:#085041;border-left:2px solid #1D9E75}
+.cal-event.relance{background:#FAEEDA;color:#633806;border-left:2px solid #BA7517}
+.cal-event.conflit{background:#FCEBEB;color:#A32D2D;border-left:2px solid #E24B4A}
+.cal-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.cal-nav-btn{padding:6px 12px;background:#0C447C;border:1px solid #185FA5;border-radius:6px;cursor:pointer;font-size:13px;color:#fff}
+.cal-nav-btn:hover{background:#185FA5}
+.cal-title{font-size:16px;font-weight:600;color:#fff}
+.view-toggle{display:flex;gap:4px}
+.view-btn{padding:5px 12px;border:1px solid #185FA5;border-radius:6px;cursor:pointer;font-size:12px;background:#0C447C;color:#85B7EB}
+.view-btn.active{background:#1D9E75;border-color:#1D9E75;color:#fff}
+.week-grid{display:grid;grid-template-columns:50px repeat(7,1fr);gap:1px;background:#e0e0db;border-radius:8px;overflow:hidden}
+.week-header{background:#042C53;padding:8px 4px;text-align:center;font-size:11px;font-weight:600;color:#85B7EB}
+.week-hour{background:#042C53;padding:4px 6px;font-size:10px;color:#85B7EB;text-align:right}
+.week-cell{background:#0C447C;min-height:40px;padding:2px;position:relative;cursor:pointer}
+.week-cell:hover{background:#185FA5}
+.rdv-modal{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.4);z-index:2000;display:none;align-items:center;justify-content:center}
+.rdv-modal.show{display:flex}
+.rdv-modal-content{background:#0C447C;border:1px solid #185FA5;border-radius:12px;padding:24px;width:400px;max-width:90vw}.rdv-modal-content input,.rdv-modal-content select,.rdv-modal-content textarea{background:#fff;color:#444;border:1px solid #B5D4F4}
+.rdv-modal-title{font-size:16px;font-weight:600;margin-bottom:16px;color:#fff}
+.type-selector{display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap}
+.type-btn{padding:6px 12px;border:1px solid #185FA5;border-radius:20px;cursor:pointer;font-size:12px;background:#042C53;color:#85B7EB}
+.type-btn.selected-rdv-physique{background:#E6F1FB;border-color:#185FA5;color:#0C447C}
+.type-btn.selected-rdv-telephone{background:#E1F5EE;border-color:#1D9E75;color:#085041}
+.type-btn.selected-relance{background:#FAEEDA;border-color:#BA7517;color:#633806}
+</style>
+</head>
+<body>
+
+<div class="modal-overlay" id="modalMdp">
+  <div class="modal">
+    <h3>Mode édition</h3>
+    <p>Entrez le mot de passe pour modifier les contenus</p>
+    <input type="password" id="mdpInput" placeholder="••••" onkeydown="if(event.key==='Enter')verifierMdp()"/>
+    <div class="modal-error" id="mdpError">Mot de passe incorrect</div>
+    <button class="modal-btn" onclick="verifierMdp()">Accéder</button>
+    <button class="modal-cancel" onclick="fermerModal()">Annuler</button>
+  </div>
+</div>
+
+<!-- MODAL COMMERCIAL -->
+<div class="modal-overlay" id="modalCommercial">
+  <div class="modal">
+    <h3>Bienvenue sur Cherry Relation Mary</h3>
+    <p>Identifiez-vous pour que vos fiches et rappels vous soient attribués</p>
+    <input type="text" id="commercialNom" placeholder="Votre nom et prénom" style="margin-bottom:10px"/>
+    <input type="email" id="commercialEmail" placeholder="Votre email pro" style="margin-bottom:12px"/>
+    <button class="modal-btn" onclick="sauvegarderCommercial()">Confirmer</button>
+  </div>
+</div>
+
+<iframe id="hidden-iframe" name="hidden-iframe" style="display:none"></iframe>
+<div class="app">
+  <div class="sidebar">
+    <div class="nav-logo"><span id="syncStatus" onclick="chargerContenu()" style="cursor:pointer;text-decoration:underline" title="Cliquer pour synchroniser">Prêt</span></div>
+    <div class="nav-section">Vue d'ensemble</div>
+    <div class="nav-item active" onclick="show(this,'dashboard')"><div class="dot" style="background:#7F77DD"></div>Tableau de bord</div>
+    <div class="nav-item" onclick="show(this,'agenda')"><div class="dot" style="background:#EF9F27"></div>Agenda</div>
+    <div class="nav-section">Scripts commerciaux</div>
+    <div class="nav-item" onclick="show(this,'conc')"><div class="dot" style="background:#1D9E75"></div>Conciergerie</div>
+    <div class="nav-item" onclick="show(this,'ser')"><div class="dot" style="background:#BA7517"></div>Sous-location</div>
+    <div class="nav-section">CRM</div>
+    <div class="nav-item" onclick="show(this,'prospect')"><div class="dot" style="background:#378ADD"></div>Fiche prospect</div>
+    <div class="nav-item" onclick="show(this,'signature')"><div class="dot" style="background:#E24B4A"></div>Fiche signature</div>
+    <div class="nav-section">Référence</div>
+    <div class="nav-item" onclick="show(this,'formules')"><div class="dot" style="background:#7F77DD"></div>Nos formules</div>
+    <div style="padding:8px 8px 0">
+      <div class="commercial-badge" onclick="demanderCommercial()">
+        <div>
+          <div class="commercial-name" id="commercialDisplay">Non identifié</div>
+          <div class="commercial-change">Changer</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="main">
+    <div class="edit-banner">
+      <span>✏️ Cliquez sur n'importe quel texte pour le modifier</span>
+      <button class="save-content-btn" onclick="sauvegarderContenu()">Sauvegarder</button>
+    </div>
+
+    <!-- DASHBOARD -->
+    <div id="f-dashboard" class="fiche active">
+      <div style="margin-bottom:18px">
+        <div style="font-size:18px;font-weight:600;color:#fff;margin-bottom:4px">Tableau de bord</div>
+        <div style="font-size:13px;color:#85B7EB" id="db-date"></div>
+      </div>
+
+      <!-- MÉTRIQUES PRINCIPALES -->
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:18px" id="db-metrics">
+        <div style="background:#0C447C;border:1px solid #185FA5;border-radius:10px;padding:14px;text-align:center">
+          <div style="font-size:11px;color:#85B7EB;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:6px">Prospects total</div>
+          <div style="font-size:28px;font-weight:600;color:#fff" id="db-total">—</div>
+        </div>
+        <div style="background:#0C447C;border:1px solid #185FA5;border-radius:10px;padding:14px;text-align:center">
+          <div style="font-size:11px;color:#85B7EB;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:6px">Relances aujourd'hui</div>
+          <div style="font-size:28px;font-weight:600;color:#E24B4A" id="db-relances-today">—</div>
+        </div>
+        <div style="background:#0C447C;border:1px solid #185FA5;border-radius:10px;padding:14px;text-align:center">
+          <div style="font-size:11px;color:#85B7EB;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:6px">RDV cette semaine</div>
+          <div style="font-size:28px;font-weight:600;color:#185FA5" id="db-rdv-week">—</div>
+        </div>
+        <div style="background:#0C447C;border:1px solid #185FA5;border-radius:10px;padding:14px;text-align:center">
+          <div style="font-size:11px;color:#85B7EB;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:6px">Clients convertis</div>
+          <div style="font-size:28px;font-weight:600;color:#1D9E75" id="db-convertis">—</div>
+        </div>
+      </div>
+
+      <!-- ALERTES RELANCES -->
+      <div style="margin-bottom:18px">
+        <div style="font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:#F09595;margin-bottom:8px;padding-bottom:5px;border-bottom:1px solid rgba(240,149,121,0.3)">Relances urgentes</div>
+        <div id="db-alertes">
+          <div style="font-size:13px;color:#85B7EB;text-align:center;padding:16px">Chargement...</div>
+        </div>
+      </div>
+
+      <!-- RDV À VENIR -->
+      <div style="margin-bottom:18px">
+        <div style="font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:#85B7EB;margin-bottom:8px;padding-bottom:5px;border-bottom:1px solid #0C447C">RDV à venir</div>
+        <div id="db-rdv">
+          <div style="font-size:13px;color:#85B7EB;text-align:center;padding:16px">Chargement...</div>
+        </div>
+      </div>
+
+      <!-- RÉPARTITION PIPELINE -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:18px">
+        <div>
+          <div style="font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:#85B7EB;margin-bottom:10px;padding-bottom:5px;border-bottom:1px solid #e0e0db">Par statut</div>
+          <div id="db-statuts"></div>
+        </div>
+        <div>
+          <div style="font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:#85B7EB;margin-bottom:10px;padding-bottom:5px;border-bottom:1px solid #e0e0db">Par formule conseillée</div>
+          <div id="db-formules"></div>
+        </div>
+      </div>
+
+      <!-- DERNIERS PROSPECTS -->
+      <div>
+        <div style="font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:#85B7EB;margin-bottom:8px;padding-bottom:5px;border-bottom:1px solid #0C447C">Derniers prospects ajoutés</div>
+        <div id="db-recents"></div>
+      </div>
+
+      <div style="text-align:center;margin-top:16px">
+        <button onclick="chargerDashboard()" style="padding:8px 16px;background:#0C447C;border:1px solid #185FA5;border-radius:8px;font-size:12px;cursor:pointer;color:#85B7EB">↻ Actualiser</button>
+      </div>
+    </div>
+
+
+    <!-- AGENDA -->
+    <div id="f-agenda" class="fiche">
+      <div class="rdv-modal" id="rdvModal">
+        <div class="rdv-modal-content">
+          <div class="rdv-modal-title" id="rdvModalTitle">Nouveau RDV</div>
+          <input type="hidden" id="rdv-id"/>
+          <div class="form-group"><label>Titre</label><input type="text" id="rdv-titre" placeholder="Ex: Visite M. Martin"/></div>
+          <div class="form-group"><label>Type</label>
+            <div class="type-selector">
+              <button class="type-btn selected-rdv-physique" onclick="selectType(this,'RDV physique')">RDV physique</button>
+              <button class="type-btn" onclick="selectType(this,'RDV téléphone')">RDV téléphone</button>
+              <button class="type-btn" onclick="selectType(this,'Relance')">Relance</button>
+            </div>
+            <input type="hidden" id="rdv-type" value="RDV physique"/>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label>Date</label><input type="date" id="rdv-date"/></div>
+            <div class="form-row">
+              <div class="form-group"><label>Début</label><input type="time" id="rdv-heure-debut" value="09:00"/></div>
+              <div class="form-group"><label>Fin</label><input type="time" id="rdv-heure-fin" value="09:30"/></div>
+            </div>
+          </div>
+          <div class="form-group"><label>Notes</label><input type="text" id="rdv-notes" placeholder="Informations complémentaires..."/></div>
+          <div id="rdv-conflit-msg" style="display:none;color:#E24B4A;font-size:12px;padding:6px 0"></div>
+          <div style="display:flex;gap:8px;margin-top:16px">
+            <button class="save-btn" onclick="sauvegarderRDV()" style="flex:1">Enregistrer</button>
+            <button id="rdv-delete-btn" onclick="supprimerRDV()" style="display:none;padding:10px 16px;background:none;border:1px solid #F09595;border-radius:8px;color:#E24B4A;cursor:pointer;font-size:13px">Supprimer</button>
+            <button onclick="fermerRDVModal()" style="padding:10px 16px;background:none;border:1px solid #ddd;border-radius:8px;cursor:pointer;font-size:13px;color:#85B7EB">Annuler</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="cal-nav">
+        <button class="cal-nav-btn" onclick="naviguerAgenda(-1)">←</button>
+        <div>
+          <div class="cal-title" id="cal-title"></div>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <div class="view-toggle">
+            <button class="view-btn active" id="btn-mois" onclick="setVue('mois')">Mois</button>
+            <button class="view-btn" id="btn-semaine" onclick="setVue('semaine')">Semaine</button>
+          </div>
+          <button class="cal-nav-btn" onclick="naviguerAgenda(1)">→</button>
+        </div>
+      </div>
+
+      <div id="cal-legende" style="display:flex;gap:12px;margin-bottom:12px;flex-wrap:wrap">
+        <div style="display:flex;align-items:center;gap:4px"><div style="width:12px;height:12px;background:#185FA5;border-radius:2px"></div><span style="font-size:11px;color:#85B7EB">RDV physique</span></div>
+        <div style="display:flex;align-items:center;gap:4px"><div style="width:12px;height:12px;background:#1D9E75;border-radius:2px"></div><span style="font-size:11px;color:#85B7EB">RDV téléphone</span></div>
+        <div style="display:flex;align-items:center;gap:4px"><div style="width:12px;height:12px;background:#BA7517;border-radius:2px"></div><span style="font-size:11px;color:#85B7EB">Relance</span></div>
+        <div style="display:flex;align-items:center;gap:4px"><div style="width:12px;height:12px;background:#E24B4A;border-radius:2px"></div><span style="font-size:11px;color:#85B7EB">Conflit</span></div>
+      </div>
+
+      <div id="cal-container"></div>
+    </div>
+
+    <!-- CONCIERGERIE -->
+    <div id="f-conc" class="fiche">
+      <div class="fiche-header conc"><div class="fiche-title conc">Conciergerie</div><div class="fiche-sub conc">Propriétaires déjà en location courte durée</div></div>
+      <div class="section"><div class="section-label">Accroche</div>
+        <div class="accroche-box"><span class="editable" id="txt_conc_accroche">"Bonjour, je reviens vers vous suite à mon message — je représente Ma Poppins, on aide les propriétaires en location courte durée à gérer leur logement et à optimiser leurs revenus. Si ça vous intéresse, je peux vous expliquer simplement comment on fonctionne."</span></div>
+      </div>
+      <div class="section"><div class="section-label">Arguments clés par formule</div>
+        <div class="args-grid">
+          <div class="arg-card conc"><div class="arg-name conc">Essentielle</div><div class="arg-comm conc"><span class="editable" id="txt_conc_ess_comm">15% du CA</span></div><div class="arg-items"><div class="ok"><span class="editable" id="txt_conc_ess_1">Annonces optimisées</span></div><div class="ok"><span class="editable" id="txt_conc_ess_2">Calendrier & tarifs temps réel</span></div><div class="ok"><span class="editable" id="txt_conc_ess_3">Communication voyageurs 7j/7</span></div><div class="ok"><span class="editable" id="txt_conc_ess_4">Arrivées & départs</span></div><div class="ok"><span class="editable" id="txt_conc_ess_5">Bilan mensuel simplifié</span></div></div><div class="note"><span class="editable" id="txt_conc_ess_note">Idéal : gère déjà le ménage, veut optimiser ses revenus</span></div></div>
+          <div class="arg-card conc"><div class="arg-name conc">Confort</div><div class="arg-comm conc"><span class="editable" id="txt_conc_conf_comm">20% du CA</span></div><div class="arg-items"><div class="ok"><span class="editable" id="txt_conc_conf_1">Tout Essentielle +</span></div><div class="ok"><span class="editable" id="txt_conc_conf_2">Ménage pro entre chaque séjour</span></div><div class="ok"><span class="editable" id="txt_conc_conf_3">Gestion complète du linge</span></div><div class="ok"><span class="editable" id="txt_conc_conf_4">Contrôle qualité</span></div><div class="ok"><span class="editable" id="txt_conc_conf_5">Réassort consommables</span></div></div><div class="note"><span class="editable" id="txt_conc_conf_note">Idéal : fatigué de gérer le quotidien</span></div></div>
+          <div class="arg-card conc"><div class="arg-name conc">Premium</div><div class="arg-comm conc"><span class="editable" id="txt_conc_prem_comm">25% du CA</span></div><div class="arg-items"><div class="ok"><span class="editable" id="txt_conc_prem_1">Tout Confort +</span></div><div class="ok"><span class="editable" id="txt_conc_prem_2">Coordination petits travaux</span></div><div class="ok"><span class="editable" id="txt_conc_prem_3">Consommables pris en charge</span></div><div class="ok"><span class="editable" id="txt_conc_prem_4">Vérification mensuelle + photos</span></div><div class="ok"><span class="editable" id="txt_conc_prem_5">Bilan + projections mois suivant</span></div></div><div class="note"><span class="editable" id="txt_conc_prem_note">Idéal : veut tout déléguer, optimiser son patrimoine</span></div></div>
+          <div class="arg-card info"><div class="arg-name info">Simulation revenus</div><div style="font-size:12px;color:#E6F1FB;line-height:1.65;margin-top:6px"><span class="editable" id="txt_conc_simu">"On peut vous faire une simulation sur votre bien — vous verrez ce que l'optimisation tarifaire peut apporter concrètement, sans engagement." Proposer si le prospect gère seul et semble satisfait.</span></div></div>
+        </div>
+      </div>
+      <div class="section"><div class="section-label">Objections fréquentes</div>
+        <div class="obj-list">
+          <div class="obj-item"><div class="obj-q"><span class="editable" id="txt_conc_obj1_q">"Je gère bien tout seul"</span></div><div class="obj-r"><span class="editable" id="txt_conc_obj1_r">Proposer Essentielle : il garde le ménage, on s'occupe de l'optimisation tarifaire. Proposer une simulation sans engagement.</span></div></div>
+          <div class="obj-item"><div class="obj-q"><span class="editable" id="txt_conc_obj2_q">"C'est trop cher"</span></div><div class="obj-r"><span class="editable" id="txt_conc_obj2_r">La commission est souvent compensée par l'optimisation. Exemple : 1 500€ → mieux optimisé → après commission → vous touchez plus net qu'avant.</span></div></div>
+          <div class="obj-item"><div class="obj-q"><span class="editable" id="txt_conc_obj3_q">"J'ai déjà quelqu'un"</span></div><div class="obj-r"><span class="editable" id="txt_conc_obj3_r">Vous en êtes satisfait ? On peut comparer : proximité, réactivité, bilan mensuel, optimisation tarifaire. Proposer un bilan sans engagement.</span></div></div>
+          <div class="obj-item"><div class="obj-q"><span class="editable" id="txt_conc_obj4_q">"Pas le bon moment"</span></div><div class="obj-r"><span class="editable" id="txt_conc_obj4_r">Envoyer la plaquette. Fixer une date de relance précise. Noter dans la fiche prospect.</span></div></div>
+        </div>
+      </div>
+      <div class="section"><div class="section-label">Conclusion de l'appel</div>
+        <div class="conclu-grid">
+          <div class="conclu-card"><div class="conclu-icon">📅</div><div class="conclu-label">RDV</div><div class="conclu-action"><span class="editable" id="txt_conc_conclu1">Proposer visite sur place ou visio. Envoyer plaquette en confirmation. Noter dans fiche prospect.</span></div></div>
+          <div class="conclu-card"><div class="conclu-icon">📧</div><div class="conclu-label">Email</div><div class="conclu-action"><span class="editable" id="txt_conc_conclu2">Envoyer PDF formules. Planifier relance téléphone dans 5 jours. Noter dans fiche prospect.</span></div></div>
+          <div class="conclu-card"><div class="conclu-icon">🔁</div><div class="conclu-label">Relance</div><div class="conclu-action"><span class="editable" id="txt_conc_conclu3">Fixer date précise avec le prospect. Envoyer plaquette si accord. Noter dans fiche prospect.</span></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SOUS-LOCATION -->
+    <div id="f-ser" class="fiche">
+      <div class="fiche-header ser"><div class="fiche-title ser">Sous-location</div><div class="fiche-sub ser">Propriétaires en longue durée / résidence secondaire</div></div>
+      <div class="section"><div class="section-label">Accroche</div>
+        <div class="accroche-box"><span class="editable" id="txt_ser_accroche">"Bonjour, je me permets de vous contacter, j'ai vu votre annonce pour votre logement — je représente Ma Poppins, une société spécialisée dans la location courte durée, et nous vous proposons de percevoir un loyer fixe chaque mois, sans gestion ni risque locatif. Si vous avez deux minutes, je peux vous expliquer simplement comment cela fonctionne."</span></div>
+      </div>
+      <div class="section"><div class="section-label">Arguments clés — Formule Sérénité</div>
+        <div class="args-grid">
+          <div class="arg-card ser" style="grid-column:span 2">
+            <div class="arg-name ser">Avantages vs locataire classique</div>
+            <div style="font-size:13px;color:#E6F1FB;line-height:1.75;margin-top:6px">
+              <strong style="color:#BA7517">1. Loyer garanti</strong> — <span class="editable" id="txt_ser_av1">Pas de logement vide ni d'impayé. C'est notre risque, pas le vôtre.</span><br>
+              <strong style="color:#BA7517">2. Zéro tracas</strong> — <span class="editable" id="txt_ser_av2">Évier qui fuit le dimanche, plaque en panne : on gère. Vous n'avez plus d'appels de ce genre.</span><br>
+              <strong style="color:#BA7517">3. Valorisation du bien</strong> — <span class="editable" id="txt_ser_av3">On peut financer l'ameublement ou des travaux (ex : cuisine équipée). Ça reste dans votre logement définitivement.</span>
+            </div>
+            <div style="margin-top:10px;padding:10px 12px;background:#0C447C;border-radius:8px;font-size:12px;color:#FAC775;font-style:italic"><span class="editable" id="txt_ser_pitch">"Bonne question. Par rapport à un locataire classique, on vous apporte trois choses qu'un locataire ne peut pas vous garantir. D'abord, le loyer est garanti chaque mois — pas de logement vide ou de cas d'impayé, c'est notre risque, pas le vôtre. Ensuite, on prend en charge les petits tracas du quotidien — un évier qui fuit le dimanche, une plaque de cuisson en panne — vous n'avez plus d'appels de ce genre. Et enfin, on valorise votre bien : on peut prendre en charge l'ameublement ou des travaux d'améliorations (comme la pose d'une cuisine équipée), ce qui augmente la valeur de votre patrimoine durablement. En résumé, vous avez la stabilité d'un loyer fixe, sans aucune des contraintes."</span></div>
+          </div>
+          <div class="arg-card ser"><div class="arg-name ser">Réparations</div><div style="font-size:12px;color:#E6F1FB;line-height:1.7;margin-top:5px"><span class="editable" id="txt_ser_rep">Existant à la signature → à votre charge. Ce qu'on installe → à notre charge. Dégradations voyageurs → à notre charge (AirCover etc.)</span></div></div>
+          <div class="arg-card ser"><div class="arg-name ser">Cuisine équipée / ameublement</div><div style="font-size:12px;color:#E6F1FB;line-height:1.65;margin-top:5px"><span class="editable" id="txt_ser_cuisine">"On finance l'installation. Elle reste définitivement dans votre logement. En contrepartie, on vous demande un engagement minimum de 5 ans."</span></div></div>
+        </div>
+      </div>
+      <div class="section"><div class="section-label">Objections fréquentes</div>
+        <div class="obj-list">
+          <div class="obj-item"><div class="obj-q"><span class="editable" id="txt_ser_obj1_q">"Quel avantage vs un locataire ?"</span></div><div class="obj-r"><span class="editable" id="txt_ser_obj1_r">Loyer garanti même si vide, zéro tracas de gestion, valorisation du bien. Utiliser le pitch complet ci-dessus.</span></div></div>
+          <div class="obj-item"><div class="obj-q"><span class="editable" id="txt_ser_obj2_q">"Vous prenez en charge les réparations ?"</span></div><div class="obj-r"><span class="editable" id="txt_ser_obj2_r">Ce qui était là à la signature = votre charge. Ce qu'on installe + dégradations voyageurs = notre charge.</span></div></div>
+          <div class="obj-item"><div class="obj-q"><span class="editable" id="txt_ser_obj3_q">"Et la cuisine équipée ?"</span></div><div class="obj-r"><span class="editable" id="txt_ser_obj3_r">On finance, ça reste dans le logement définitivement. Contrepartie : engagement 5 ans minimum.</span></div></div>
+          <div class="obj-item"><div class="obj-q"><span class="editable" id="txt_ser_obj4_q">"Pas le bon moment"</span></div><div class="obj-r"><span class="editable" id="txt_ser_obj4_r">Envoyer la plaquette. Fixer une date de relance précise. Noter dans la fiche prospect.</span></div></div>
+        </div>
+      </div>
+      <div class="section"><div class="section-label">Conclusion de l'appel</div>
+        <div class="conclu-grid">
+          <div class="conclu-card"><div class="conclu-icon">📅</div><div class="conclu-label">RDV / Visite</div><div class="conclu-action"><span class="editable" id="txt_ser_conclu1">Visite du logement pour faire une offre concrète sous 48h. Envoyer plaquette en confirmation.</span></div></div>
+          <div class="conclu-card"><div class="conclu-icon">📧</div><div class="conclu-label">Email</div><div class="conclu-action"><span class="editable" id="txt_ser_conclu2">Envoyer PDF formules. Planifier relance téléphone dans 5 jours. Noter dans fiche prospect.</span></div></div>
+          <div class="conclu-card"><div class="conclu-icon">🔁</div><div class="conclu-label">Relance</div><div class="conclu-action"><span class="editable" id="txt_ser_conclu3">Fixer date précise avec le prospect. Envoyer plaquette si accord. Noter dans fiche prospect.</span></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PROSPECT -->
+    <div id="f-prospect" class="fiche">
+      <div class="page-title">Fiche prospect</div>
+      <input type="hidden" id="p-id-prospect"/>
+      <div class="search-box">
+        <input type="text" id="searchInput" placeholder="Rechercher par nom, prénom ou téléphone..." onkeydown="if(event.key==='Enter')rechercherProspect()"/>
+        <button class="search-btn" onclick="rechercherProspect()">Rechercher</button>
+      </div>
+      <div id="searchResults" style="margin-bottom:10px"></div>
+      <div class="form-row">
+        <div class="form-group"><label>Nom</label><input type="text" id="p-nom" placeholder="Dupont"/></div>
+        <div class="form-group"><label>Prénom</label><input type="text" id="p-prenom" placeholder="Jean"/></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>Téléphone</label><input type="text" id="p-tel" placeholder="06..."/></div>
+        <div class="form-group"><label>Email</label><input type="text" id="p-email" placeholder="jean@..."/></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>Ville du logement</label><input type="text" id="p-ville" placeholder="Lyon"/></div>
+        <div class="form-group"><label>Type de logement</label><select id="p-type"><option value="">-- Choisir --</option><option>Studio</option><option>T1</option><option>T2</option><option>T3</option><option>T4+</option></select></div>
+      </div>
+      <div class="form-group"><label>Situation actuelle</label><select id="p-statut"><option value="">-- Choisir --</option><option>Location longue durée nue</option><option>Location longue durée meublée</option><option>Location courte durée</option><option>Résidence secondaire</option></select></div>
+      <div class="form-group"><label>Branche</label><select id="p-branche"><option value="">-- À définir --</option><option>Conciergerie</option><option>Sous-location (Sérénité)</option></select></div>
+      <div class="form-group"><label>Objectif principal</label><div>
+        <span class="ftag" data-group="objectif" onclick="this.classList.toggle('active')">Gagner plus</span>
+        <span class="ftag" data-group="objectif" onclick="this.classList.toggle('active')">Gagner du temps</span>
+        <span class="ftag" data-group="objectif" onclick="this.classList.toggle('active')">Sécuriser les revenus</span>
+        <span class="ftag" data-group="objectif" onclick="this.classList.toggle('active')">Déléguer totalement</span>
+      </div></div>
+      <div class="form-group"><label>Frein détecté</label><div>
+        <span class="ftag" data-group="frein" onclick="this.classList.toggle('active')">Prix</span>
+        <span class="ftag" data-group="frein" onclick="this.classList.toggle('active')">Manque de confiance</span>
+        <span class="ftag" data-group="frein" onclick="this.classList.toggle('active')">Doit réfléchir</span>
+        <span class="ftag" data-group="frein" onclick="this.classList.toggle('active')">Déjà une solution</span>
+      </div></div>
+      <div class="form-group"><label>Formule conseillée</label><select id="p-formule"><option value="">-- À définir --</option><option>Essentielle (15%)</option><option>Confort (20%)</option><option>Premium (25%)</option><option>Sérénité (loyer garanti)</option></select></div>
+      <div class="form-group"><label>Commentaire</label><input type="text" id="p-commentaire" placeholder="Notes sur l'appel..."/></div>
+      <div class="form-row">
+        <div class="form-group"><label>Prochaine action</label><select id="p-action"><option>Relance téléphone</option><option>Envoi informations</option><option>RDV</option><option>Attente décision</option><option>Stop suivi</option></select></div>
+        <div class="form-group"><label>Date de relance</label><input type="date" id="p-date"/></div>
+      </div>
+      <button class="save-btn" id="saveBtn" onclick="enregistrerFiche()">Enregistrer la fiche</button>
+    </div>
+
+
+    <!-- SIGNATURE -->
+    <div id="f-signature" class="fiche">
+      <div style="background:#0C447C;border:1px solid #185FA5;border-left:4px solid #E24B4A;border-radius:12px;padding:16px 18px;margin-bottom:16px">
+        <div style="font-size:18px;font-weight:600;color:#F09595;margin-bottom:3px">Fiche signature</div>
+        <div style="font-size:12px;color:#B5D4F4">Conversion prospect → client — sauvegarde partielle possible à tout moment</div>
+      </div>
+
+      <!-- RECHERCHE PROSPECT -->
+      <div class="section">
+        <div class="section-label">Rechercher le prospect</div>
+        <div class="search-box">
+          <input type="text" id="sig-search" placeholder="Nom, prénom ou téléphone..." onkeydown="if(event.key==='Enter')rechercherPourSignature()"/>
+          <button class="search-btn" onclick="rechercherPourSignature()">Rechercher</button>
+        </div>
+        <div id="sig-search-results"></div>
+        <div id="sig-prospect-info" style="display:none;background:#E1F5EE;border:1px solid #5DCAA5;border-radius:8px;padding:10px 14px;margin-top:8px;font-size:13px;color:#085041"></div>
+      </div>
+
+      <!-- BLOC PROPRIÉTAIRE -->
+      <div class="section">
+        <div class="section-label" style="color:#A32D2D;border-bottom-color:#F09595">Propriétaire</div>
+        <input type="hidden" id="sig-id-prospect"/>
+        <input type="hidden" id="sig-id-prop"/>
+        <div class="form-row">
+          <div class="form-group"><label>Nom</label><input type="text" id="sig-nom" placeholder="Dupont"/></div>
+          <div class="form-group"><label>Prénom</label><input type="text" id="sig-prenom" placeholder="Jean"/></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>Téléphone</label><input type="text" id="sig-tel" placeholder="06..."/></div>
+          <div class="form-group"><label>Email</label><input type="text" id="sig-email" placeholder="jean@..."/></div>
+        </div>
+        <div class="form-group"><label>Adresse complète</label><input type="text" id="sig-adresse" placeholder="12 rue des Fleurs"/></div>
+        <div class="form-row">
+          <div class="form-group"><label>Ville</label><input type="text" id="sig-ville-prop" placeholder="Lyon"/></div>
+          <div class="form-group"><label>Statut</label><select id="sig-statut-prop"><option value="En cours">En cours</option><option value="Actif">Actif</option><option value="Suspendu">Suspendu</option></select></div>
+        </div>
+        <div class="form-group"><label>Notes propriétaire</label><input type="text" id="sig-notes-prop" placeholder="Informations complémentaires..."/></div>
+      </div>
+
+      <!-- BLOC LOGEMENT -->
+      <div class="section">
+        <div class="section-label" style="color:#A32D2D;border-bottom-color:#F09595">Logement</div>
+        <input type="hidden" id="sig-id-log"/>
+        <div class="form-row">
+          <div class="form-group"><label>Nom du logement</label><input type="text" id="sig-nom-log" placeholder="Studio Lyon Centre"/></div>
+          <div class="form-group"><label>Type</label><select id="sig-type-log"><option value="">-- Choisir --</option><option>Studio</option><option>T1</option><option>T2</option><option>T3</option><option>T4+</option><option>Maison</option><option>Villa</option></select></div>
+        </div>
+        <div class="form-group"><label>Adresse du logement</label><input type="text" id="sig-adresse-log" placeholder="5 place Bellecour"/></div>
+        <div class="form-row">
+          <div class="form-group"><label>Ville</label><input type="text" id="sig-ville-log" placeholder="Lyon"/></div>
+          <div class="form-group"><label>Code postal</label><input type="text" id="sig-cp-log" placeholder="69001"/></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>Capacité (personnes)</label><input type="number" id="sig-capacite" placeholder="4" min="1"/></div>
+          <div class="form-group"><label>Mode d'exploitation</label><select id="sig-mode"><option value="">-- Choisir --</option><option>Conciergerie</option><option>Sous-location</option></select></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>Date début gestion</label><input type="date" id="sig-date-debut-log"/></div>
+          <div class="form-group"><label>Statut logement</label><select id="sig-statut-log"><option value="En cours">En cours</option><option value="Actif">Actif</option><option value="Suspendu">Suspendu</option></select></div>
+        </div>
+        <div class="form-group"><label>Notes logement</label><input type="text" id="sig-notes-log" placeholder="Informations complémentaires..."/></div>
+        <div class="form-row">
+          <div class="form-group"><label>Code Wifi</label><input type="text" id="sig-code-wifi" placeholder="Ex: MaPoppins2024"/></div>
+          <div class="form-group"><label>Code boîte à clé</label><input type="text" id="sig-code-cle" placeholder="Ex: 1234"/></div>
+        </div>
+      </div>
+
+      <!-- BLOC FORMULE -->
+      <div class="section">
+        <div class="section-label" style="color:#A32D2D;border-bottom-color:#F09595">Formule choisie</div>
+        <input type="hidden" id="sig-id-form"/>
+        <div class="form-row">
+          <div class="form-group"><label>Formule</label><select id="sig-formule" onchange="majCommission()"><option value="">-- Choisir --</option><option value="Essentielle">Essentielle</option><option value="Confort">Confort</option><option value="Premium">Premium</option><option value="Sérénité">Sérénité (sous-location)</option></select></div>
+          <div class="form-group"><label>Commission %</label><input type="text" id="sig-commission" placeholder="Ex: 20"/></div>
+        </div>
+        <div class="form-group"><label>Options incluses</label><input type="text" id="sig-options" placeholder="Ex: linge, consommables..."/></div>
+        <div class="form-row">
+          <div class="form-group"><label>Frais fixes (€/mois)</label><input type="text" id="sig-frais" placeholder="0"/></div>
+          <div class="form-group"><label>Offre promotionnelle</label><input type="text" id="sig-promo" placeholder="Ex: 1er mois offert"/></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>Date début contrat</label><input type="date" id="sig-date-debut-form"/></div>
+          <div class="form-group"><label>Date fin contrat</label><input type="date" id="sig-date-fin-form"/></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>Statut contrat</label><select id="sig-statut-form"><option value="En cours">En cours</option><option value="Brouillon">Brouillon</option><option value="Actif">Actif</option><option value="Suspendu">Suspendu</option><option value="Terminé">Terminé</option></select></div>
+        </div>
+        <div class="form-group"><label>Notes formule</label><input type="text" id="sig-notes-form" placeholder="Conditions particulières..."/></div>
+      </div>
+
+      <div style="display:flex;gap:10px;margin-top:8px">
+        <button class="save-btn" id="saveSigBtn" onclick="enregistrerSignature()" style="flex:1">Enregistrer</button>
+        <button onclick="resetSignature()" style="padding:11px 18px;background:none;border:1px solid #ddd;border-radius:8px;font-size:13px;cursor:pointer;color:#888">Réinitialiser</button>
+      </div>
+      <div id="sig-status" style="margin-top:10px;font-size:12px;color:#85B7EB;text-align:center"></div>
+    </div>
+
+    <!-- FORMULES -->
+    <div id="f-formules" class="fiche">
+      <div class="page-title">Nos 4 formules</div>
+      <div class="formules-grid">
+        <div class="formule-card"><div class="f-name"><span class="editable" id="txt_f1_nom">Essentielle</span></div><div class="f-comm" style="color:#1D9E75"><span class="editable" id="txt_f1_comm">15 %</span></div><div class="f-desc"><span class="editable" id="txt_f1_desc">La gestion efficace, sans superflu</span></div><div class="f-svc"><div class="ok"><span class="editable" id="txt_f1_s1">Annonces optimisées et professionnelles</span></div><div class="ok"><span class="editable" id="txt_f1_s2">Gestion calendrier & tarifs</span></div><div class="ok"><span class="editable" id="txt_f1_s3">Communication voyageurs 7j/7</span></div><div class="ok"><span class="editable" id="txt_f1_s4">Organisation arrivées & départs</span></div><div class="ok"><span class="editable" id="txt_f1_s5">Bilan mensuel simplifié</span></div></div><div style="margin-top:9px;font-size:11px;color:#aaa"><span class="editable" id="txt_f1_note">Ménage / linge / consommables à votre charge</span></div></div>
+        <div class="formule-card"><div class="f-name"><span class="editable" id="txt_f2_nom">Confort</span></div><div class="f-comm" style="color:#185FA5"><span class="editable" id="txt_f2_comm">20 %</span></div><div class="f-desc"><span class="editable" id="txt_f2_desc">Zéro gestion au quotidien</span></div><div class="f-svc"><div class="ok"><span class="editable" id="txt_f2_s1">Tout Essentielle +</span></div><div class="ok"><span class="editable" id="txt_f2_s2">Ménage professionnel coordonné</span></div><div class="ok"><span class="editable" id="txt_f2_s3">Gestion complète du linge</span></div><div class="ok"><span class="editable" id="txt_f2_s4">Contrôle qualité après chaque séjour</span></div><div class="ok"><span class="editable" id="txt_f2_s5">Réassort consommables</span></div></div></div>
+        <div class="formule-card"><div class="f-name"><span class="editable" id="txt_f3_nom">Premium</span></div><div class="f-comm" style="color:#534AB7"><span class="editable" id="txt_f3_comm">25 %</span></div><div class="f-desc"><span class="editable" id="txt_f3_desc">Performance maximale, sérénité totale</span></div><div class="f-svc"><div class="ok"><span class="editable" id="txt_f3_s1">Tout Confort +</span></div><div class="ok"><span class="editable" id="txt_f3_s2">Coordination petits travaux</span></div><div class="ok"><span class="editable" id="txt_f3_s3">Consommables de base pris en charge</span></div><div class="ok"><span class="editable" id="txt_f3_s4">Vérification mensuelle complète + photos</span></div><div class="ok"><span class="editable" id="txt_f3_s5">Bilan + projections mois suivant</span></div></div></div>
+        <div class="formule-card hl"><div style="font-size:10px;font-weight:600;color:#1D9E75;margin-bottom:4px">SOUS-LOCATION</div><div class="f-name"><span class="editable" id="txt_f4_nom">Sérénité</span></div><div class="f-comm" style="color:#BA7517"><span class="editable" id="txt_f4_comm">Loyer garanti</span></div><div class="f-desc"><span class="editable" id="txt_f4_desc">Revenu fixe, zéro contrainte</span></div><div class="f-svc"><div class="ok"><span class="editable" id="txt_f4_s1">Bail de sous-location signé</span></div><div class="ok"><span class="editable" id="txt_f4_s2">Loyer versé même si logement vide</span></div><div class="ok"><span class="editable" id="txt_f4_s3">Ameublement possible (reste dans le bien)</span></div><div class="ok"><span class="editable" id="txt_f4_s4">Travaux d'amélioration pris en charge</span></div><div class="ok"><span class="editable" id="txt_f4_s5">Valorisation durable du patrimoine</span></div></div><div style="margin-top:9px;font-size:11px;color:#BA7517"><span class="editable" id="txt_f4_note">Engagement minimum 5 ans si travaux / ameublement</span></div></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>let currentProspectId = '';
+let searchResults = [];
+
+// ── REQUÊTE JSONP (contourne CORS depuis file://) ──────────
+function fetchJSONP(url) {
+  return new Promise((resolve, reject) => {
+    const cbName = 'cb_' + Math.random().toString(36).slice(2);
+    window[cbName] = (data) => {
+      delete window[cbName];
+      document.head.removeChild(script);
+      resolve(data);
+    };
+    const script = document.createElement('script');
+    script.src = url + '&callback=' + cbName;
+    script.onerror = () => { delete window[cbName]; reject(new Error('JSONP error')); };
+    document.head.appendChild(script);
+  });
+}
+
+async function fetchData(url) {
+  try {
+    const resp = await fetch(url);
+    return await resp.json();
+  } catch(e) {
+    try {
+      return await fetchJSONP(url);
+    } catch(e2) {
+      return null;
+    }
+  }
+}
+
+
+const AGENDA_URL = "https://script.google.com/macros/s/AKfycbwJ2Kp3_VKHUMyWJkHeylqIkRo6mXZR-CWD-gRD90iVEInSxGkyyep1do5Gpqvcrs4E/exec";
+const DASHBOARD_URL = "https://script.google.com/macros/s/AKfycbw3Thu_rz5KNbtFmHaalBNZVD_rZ9NN5ztEKFuF5l_HKQJpGkHhw9J3sCYhjbtKKqi5/exec"; // URL du script Dashboard
+const MAKE_WEBHOOK_URL = "https://hook.eu1.make.com/t5yt68rarqt4cg65j2titng7fd1bpkfw";
+const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzDBwQl504azG5nXG41K5IFd4Q8TqZV8oxiOfoBGiedTHgacnCU-uwrFFHqH9wD4CC_/exec";
+const MDP = "1397";
+let editMode = false;
+
+window.addEventListener('load', () => {
+  document.getElementById('syncStatus').textContent = 'Prêt';
+  initCommercial();
+  chargerDashboard();
+});
+
+async function chargerContenu() {
+  const statusEl = document.getElementById('syncStatus');
+  statusEl.textContent = 'Sync...';
+  try {
+    const data = await fetchData(APPS_SCRIPT_URL + '?action=getContenu');
+    if (data.success && data.contenu && Object.keys(data.contenu).length > 0) {
+      Object.entries(data.contenu).forEach(([id, val]) => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = val;
+      });
+      statusEl.textContent = 'Synchronisé ✓';
+    } else {
+      statusEl.textContent = 'Prêt';
+    }
+  } catch(e) {
+    statusEl.textContent = 'Prêt';
+  }
+}
+
+function toggleEdit() {
+  if (editMode) {
+    quitterEditMode();
+  } else {
+    document.getElementById('modalMdp').classList.add('show');
+    setTimeout(() => document.getElementById('mdpInput').focus(), 100);
+  }
+}
+
+function verifierMdp() {
+  if (document.getElementById('mdpInput').value === MDP) {
+    fermerModal();
+    activerEditMode();
+  } else {
+    document.getElementById('mdpError').style.display = 'block';
+    document.getElementById('mdpInput').value = '';
+  }
+}
+
+function fermerModal() {
+  document.getElementById('modalMdp').classList.remove('show');
+  document.getElementById('mdpInput').value = '';
+  document.getElementById('mdpError').style.display = 'none';
+}
+
+function activerEditMode() {
+  editMode = true;
+  document.body.classList.add('edit-mode');
+  document.querySelectorAll('.editable').forEach(el => el.setAttribute('contenteditable', 'true'));
+  if(document.getElementById('editBtn')) document.getElementById('editBtn').classList.add('active');
+  document.getElementById('topbarEditBtn').textContent = '\uD83D\uDD13 Mode édition';
+  document.getElementById('topbarEditBtn').classList.add('active');
+}
+
+function quitterEditMode() {
+  editMode = false;
+  document.body.classList.remove('edit-mode');
+  document.querySelectorAll('.editable').forEach(el => el.setAttribute('contenteditable', 'false'));
+  if(document.getElementById('editBtn')) document.getElementById('editBtn').classList.remove('active');
+  document.getElementById('topbarEditBtn').textContent = '\uD83D\uDD12 Mode édition';
+  document.getElementById('topbarEditBtn').classList.remove('active');
+}
+
+async function sauvegarderContenu() {
+  const btn = document.querySelector('.save-content-btn');
+  btn.textContent = 'Sauvegarde...';
+  btn.disabled = true;
+  const contenu = {};
+  document.querySelectorAll('.editable[id]').forEach(el => { contenu[el.id] = el.textContent; });
+  try {
+    const params = new URLSearchParams({ action: 'saveContenu', contenu: JSON.stringify(contenu) });
+    new Image().src = APPS_SCRIPT_URL + '?' + params.toString();
+    await new Promise(r => setTimeout(r, 1500));
+    btn.textContent = 'Sauvegardé ✓';
+    setTimeout(() => { btn.textContent = 'Sauvegarder'; btn.disabled = false; }, 2000);
+  } catch(e) {
+    btn.textContent = 'Erreur';
+    btn.disabled = false;
+  }
+}
+
+async function rechercherProspect() {
+  const query = document.getElementById('searchInput').value.trim();
+  if (!query) return;
+  const el = document.getElementById('searchResults');
+  el.innerHTML = '<div style="font-size:13px;color:#85B7EB;padding:8px">Recherche en cours...</div>';
+  try {
+    const data = await fetchData(APPS_SCRIPT_URL + '?action=searchProspect&query=' + encodeURIComponent(query));
+    if (data.success && data.results && data.results.length > 0) {
+      searchResults = data.results;
+      el.innerHTML = data.results.map((r,i) => `<div class="result-item" onclick='chargerProspect(${i})'><div><div class="result-name">${r.nom||''} ${r.prenom||''}</div><div class="result-info">${r.telephone||''} ${r.email?'· '+r.email:''}</div></div><span class="result-badge">${r.statut||'Nouveau'}</span></div>`).join('');
+    } else {
+      el.innerHTML = '<div style="font-size:13px;color:#85B7EB;padding:8px">Aucun résultat trouvé</div>';
+    }
+  } catch(e) {
+    el.innerHTML = '<div style="font-size:13px;color:#E24B4A;padding:8px">Erreur de connexion</div>';
+  }
+}
+
+function chargerProspect(idx) {
+  const r = searchResults[idx] || {};
+  currentProspectId = r.id || '';
+  console.log('ID chargé:', currentProspectId);
+  document.getElementById('p-nom').value = r.nom || '';
+  document.getElementById('p-prenom').value = r.prenom || '';
+  document.getElementById('p-tel').value = r.telephone || '';
+  document.getElementById('p-email').value = r.email || '';
+  document.getElementById('p-ville').value = r.ville || '';
+  document.getElementById('p-statut').value = r.statut_logement || '';
+  document.getElementById('p-branche').value = r.profil || '';
+  document.getElementById('p-formule').value = r.formule || '';
+  document.getElementById('p-commentaire').value = r.commentaire || '';
+  document.getElementById('p-action').value = r.action || '';
+  document.getElementById('p-date').value = r.date_relance || '';
+  document.getElementById('searchResults').innerHTML = '<div style="font-size:12px;color:#5DCAA5;padding:6px 0">Fiche chargee — modifiez et reenregistrez</div>';
+}
+
+
+async function enregistrerFiche() {
+  const btn = document.getElementById('saveBtn');
+  const nom = document.getElementById('p-nom').value;
+  const telephone = document.getElementById('p-tel').value;
+  if (!nom && !telephone) { alert('Merci de renseigner au minimum le nom ou le telephone.'); return; }
+
+  btn.textContent = 'Envoi en cours...';
+  btn.disabled = true;
+
+  const params = new URLSearchParams({
+    nom,
+    prenom: document.getElementById('p-prenom').value,
+    telephone,
+    email: document.getElementById('p-email').value,
+    ville_logement: document.getElementById('p-ville').value,
+    type_logement: document.getElementById('p-type').value,
+    statut_logement: document.getElementById('p-statut').value,
+    profil: document.getElementById('p-branche').value,
+    objectif: Array.from(document.querySelectorAll('.ftag.active')).filter(t=>t.dataset.group==='objectif').map(t=>t.textContent).join(', '),
+    frein: Array.from(document.querySelectorAll('.ftag.active')).filter(t=>t.dataset.group==='frein').map(t=>t.textContent).join(', '),
+    formule_conseillee: document.getElementById('p-formule').value,
+    commentaire: document.getElementById('p-commentaire').value,
+    action_suivante: document.getElementById('p-action').value,
+    date_relance: document.getElementById('p-date').value,
+    statut_prospect: 'Nouveau',
+    source_contact: 'Appel sortant',
+    commercial: getCommercial().nom,
+    email_commercial: getCommercial().email
+  });
+
+  if (currentProspectId) {
+    params.append('id_prospect', currentProspectId);
+  }
+
+  try {
+    const resp = await fetch(APPS_SCRIPT_URL + '?' + params.toString(), {mode: 'cors'});
+    const data = await resp.json();
+
+    btn.textContent = 'Enregistre ✓';
+    btn.style.background = '#0F6E56';
+
+    if (data.modification) {
+      const sheetUrl = data.url || 'https://docs.google.com/spreadsheets/d/1JZAx0dqQYg_Sff3cAlXjQfak8WnAmJ_1TzU80pyMpto/edit#gid=0';
+      document.getElementById('searchResults').innerHTML =
+        '<div style="background:#E24B4A;color:#fff;padding:12px 14px;border-radius:8px;margin-top:8px;font-size:13px;font-weight:500">' +
+        '⚠️ Modification enregistrée en rouge dans le Sheets — ' +
+        '<a href="' + sheetUrl + '" target="_blank" style="color:#fff;text-decoration:underline">Ouvrir le Sheets →</a>' +
+        '</div>';
+    }
+  } catch(e) {
+    // Fallback new Image si fetch bloque
+    new Image().src = APPS_SCRIPT_URL + '?' + params.toString();
+    btn.textContent = 'Enregistre ✓';
+    btn.style.background = '#0F6E56';
+  }
+
+  setTimeout(() => {
+    btn.textContent = 'Enregistrer la fiche';
+    btn.style.background = '#1D9E75';
+    btn.disabled = false;
+    resetFiche();
+  }, 5000);
+}
+
+
+
+
+
+
+
+
+// ── SIGNATURE ─────────────────────────────────────────────
+
+async function rechercherPourSignature() {
+  const query = document.getElementById('sig-search').value.trim();
+  if (!query) return;
+  const el = document.getElementById('sig-search-results');
+  el.innerHTML = '<div style="font-size:13px;color:#85B7EB;padding:8px">Recherche en cours...</div>';
+  try {
+    const data = await fetchData(APPS_SCRIPT_URL + '?action=searchProspect&query=' + encodeURIComponent(query));
+    if (data.success && data.results && data.results.length > 0) {
+      el.innerHTML = data.results.map(r => `<div class="result-item" onclick='chargerSignature(${JSON.stringify(r)})'><div><div class="result-name">${r.nom||''} ${r.prenom||''}</div><div class="result-info">${r.telephone||''} ${r.email?'· '+r.email:''}</div></div><span class="result-badge" style="${r.converti==='Oui'?'background:#FAEEDA;color:#633806':''}">${r.converti==='Oui'?'Client':'Prospect'}</span></div>`).join('');
+    } else {
+      el.innerHTML = '<div style="font-size:13px;color:#85B7EB;padding:8px">Aucun résultat</div>';
+    }
+  } catch(e) {
+    el.innerHTML = '<div style="font-size:13px;color:#E24B4A;padding:8px">Erreur de connexion</div>';
+  }
+}
+
+async function chargerSignature(prospect) {
+  document.getElementById('sig-search-results').innerHTML = '';
+  document.getElementById('sig-id-prospect').value = prospect.id || '';
+
+  // Pré-remplir depuis prospect
+  document.getElementById('sig-nom').value = prospect.nom || '';
+  document.getElementById('sig-prenom').value = prospect.prenom || '';
+  document.getElementById('sig-tel').value = prospect.telephone || '';
+  document.getElementById('sig-email').value = prospect.email || '';
+  document.getElementById('sig-ville-prop').value = prospect.ville || '';
+  if (prospect.formule) document.getElementById('sig-formule').value = prospect.formule.replace(' (15%)','').replace(' (20%)','').replace(' (25%)','').replace(' (loyer garanti)','').replace(' (sous-location)','');
+  majCommission();
+
+  // Info prospect
+  const info = document.getElementById('sig-prospect-info');
+  info.style.display = 'block';
+  info.innerHTML = `✓ Prospect chargé : <strong>${prospect.nom} ${prospect.prenom}</strong> — ${prospect.statut||'Nouveau'}${prospect.converti==='Oui'?' — <strong>Déjà converti</strong>':''}`;
+
+  // Charger données signature existantes si déjà créées
+  if (prospect.id) {
+    try {
+      const data = await fetchData(APPS_SCRIPT_URL + '?action=getSignature&id_prospect=' + encodeURIComponent(prospect.id));
+      if (data && data.success && data.data) {
+        const d = data.data;
+        if (d.proprietaire) {
+          if (d.proprietaire.id) document.getElementById('sig-id-prop').value = d.proprietaire.id;
+          if (d.proprietaire.adresse) document.getElementById('sig-adresse').value = d.proprietaire.adresse;
+          if (d.proprietaire.statut) document.getElementById('sig-statut-prop').value = d.proprietaire.statut;
+          if (d.proprietaire.notes) document.getElementById('sig-notes-prop').value = d.proprietaire.notes;
+        }
+        if (d.logement) {
+          if (d.logement.id) document.getElementById('sig-id-log').value = d.logement.id;
+          if (d.formule && d.formule.id) document.getElementById('sig-id-form').value = d.formule.id;
+          if (d.logement.nom_logement) document.getElementById('sig-nom-log').value = d.logement.nom_logement;
+          if (d.logement.adresse) document.getElementById('sig-adresse-log').value = d.logement.adresse;
+          if (d.logement.ville) document.getElementById('sig-ville-log').value = d.logement.ville;
+          if (d.logement.code_postal) document.getElementById('sig-cp-log').value = d.logement.code_postal;
+          if (d.logement.type_logement) document.getElementById('sig-type-log').value = d.logement.type_logement;
+          if (d.logement.capacite) document.getElementById('sig-capacite').value = d.logement.capacite;
+          if (d.logement.mode_exploitation) document.getElementById('sig-mode').value = d.logement.mode_exploitation;
+          if (d.logement.date_debut) document.getElementById('sig-date-debut-log').value = d.logement.date_debut;
+          if (d.logement.statut) document.getElementById('sig-statut-log').value = d.logement.statut;
+          if (d.logement.notes) document.getElementById('sig-notes-log').value = d.logement.notes;
+          if (d.logement.code_wifi) document.getElementById('sig-code-wifi').value = d.logement.code_wifi;
+          if (d.logement.code_cle) document.getElementById('sig-code-cle').value = d.logement.code_cle;
+        }
+        if (d.formule) {
+          if (d.formule.id) document.getElementById('sig-id-form').value = d.formule.id;
+          if (d.formule.formule) document.getElementById('sig-formule').value = d.formule.formule;
+          if (d.formule.commission) document.getElementById('sig-commission').value = d.formule.commission;
+          if (d.formule.options) document.getElementById('sig-options').value = d.formule.options;
+          if (d.formule.frais_fixes) document.getElementById('sig-frais').value = d.formule.frais_fixes;
+          if (d.formule.offre_promo) document.getElementById('sig-promo').value = d.formule.offre_promo;
+          if (d.formule.date_debut) document.getElementById('sig-date-debut-form').value = d.formule.date_debut;
+          if (d.formule.date_fin) document.getElementById('sig-date-fin-form').value = d.formule.date_fin;
+          if (d.formule.statut_contrat) document.getElementById('sig-statut-form').value = d.formule.statut_contrat;
+          if (d.formule.notes) document.getElementById('sig-notes-form').value = d.formule.notes;
+        }
+        if (d.formule_conseillee) document.getElementById('sig-formule').value = d.formule_conseillee.replace(' (15%)','').replace(' (20%)','').replace(' (25%)','').replace(' (loyer garanti)','');
+        majCommission();
+      }
+    } catch(e) {}
+  }
+
+  document.getElementById('sig-status').textContent = '';
+  document.getElementById('sig-status').style.color = '#888';
+}
+
+function majCommission() {
+  const f = document.getElementById('sig-formule').value;
+  const commMap = {'Essentielle':'15','Confort':'20','Premium':'25','Sérénité':''};
+  if (commMap[f] !== undefined && !document.getElementById('sig-commission').value) {
+    document.getElementById('sig-commission').value = commMap[f];
+  }
+}
+
+async function enregistrerSignature() {
+  const btn      = document.getElementById('saveSigBtn');
+  const statusEl = document.getElementById('sig-status');
+  const idProspect = document.getElementById('sig-id-prospect').value;
+  if (!idProspect) {
+    statusEl.textContent = 'Merci de rechercher et selectionner un prospect avant denregistrer.';
+    statusEl.style.color = '#E24B4A';
+    return;
+  }
+  btn.textContent = 'Enregistrement...';
+  btn.disabled = true;
+  const flat = new URLSearchParams({
+    action: 'saveSignature',
+    id_prospect: idProspect,
+    prop_nom: document.getElementById('sig-nom').value,
+    prop_prenom: document.getElementById('sig-prenom').value,
+    prop_telephone: document.getElementById('sig-tel').value,
+    prop_email: document.getElementById('sig-email').value,
+    prop_adresse: document.getElementById('sig-adresse').value,
+    prop_ville: document.getElementById('sig-ville-prop').value,
+    prop_statut: document.getElementById('sig-statut-prop').value,
+    prop_notes: document.getElementById('sig-notes-prop').value,
+    log_nom: document.getElementById('sig-nom-log').value,
+    log_adresse: document.getElementById('sig-adresse-log').value,
+    log_ville: document.getElementById('sig-ville-log').value,
+    log_cp: document.getElementById('sig-cp-log').value,
+    log_type: document.getElementById('sig-type-log').value,
+    log_capacite: document.getElementById('sig-capacite').value,
+    log_mode: document.getElementById('sig-mode').value,
+    log_date_debut: document.getElementById('sig-date-debut-log').value,
+    log_statut: document.getElementById('sig-statut-log').value,
+    log_notes: document.getElementById('sig-notes-log').value,
+    log_code_wifi: document.getElementById('sig-code-wifi').value,
+    log_code_cle: document.getElementById('sig-code-cle').value,
+    form_formule: document.getElementById('sig-formule').value,
+    form_commission: document.getElementById('sig-commission').value,
+    form_options: document.getElementById('sig-options').value,
+    form_frais: document.getElementById('sig-frais').value,
+    form_promo: document.getElementById('sig-promo').value,
+    form_date_debut: document.getElementById('sig-date-debut-form').value,
+    form_date_fin: document.getElementById('sig-date-fin-form').value,
+    form_statut: document.getElementById('sig-statut-form').value,
+    form_notes: document.getElementById('sig-notes-form').value,
+    commercial: getCommercial().nom
+  });
+  try {
+    const resp = await fetch(APPS_SCRIPT_URL + '?' + flat.toString(), { mode: 'cors' });
+    const data = await resp.json();
+    btn.textContent = 'Enregistre ✓';
+    btn.style.background = '#0F6E56';
+    if (data.modification) {
+      const sheetUrl = 'https://docs.google.com/spreadsheets/d/1JZAx0dqQYg_Sff3cAlXjQfak8WnAmJ_1TzU80pyMpto/edit';
+      statusEl.innerHTML =
+        '<div style="background:#E24B4A;color:#fff;padding:10px 14px;border-radius:8px;font-size:13px;font-weight:600;margin-top:6px">' +
+        '🔴 Modification demandée — lignes rouges créées dans Sheets<br>' +
+        '<span style="font-weight:400;font-size:12px">Logements & Formules · </span>' +
+        '<a href="' + sheetUrl + '" target="_blank" style="color:#fff;text-decoration:underline;font-size:12px">Ouvrir le Sheets →</a>' +
+        '</div>';
+    } else {
+      statusEl.textContent = 'Signature enregistrée ✓';
+      statusEl.style.color = '#5DCAA5';
+    }
+  } catch(e) {
+    // Fallback si CORS bloque (file://)
+    new Image().src = APPS_SCRIPT_URL + '?' + flat.toString();
+    btn.textContent = 'Enregistre ✓';
+    btn.style.background = '#0F6E56';
+    statusEl.textContent = 'Enregistré — vérifiez le Sheets pour les lignes rouges.';
+    statusEl.style.color = '#EF9F27';
+  }
+  setTimeout(() => {
+    btn.textContent = 'Enregistrer';
+    btn.style.background = '#1D9E75';
+    btn.disabled = false;
+  }, 5000);
+}
+
+function resetSignature() {
+  ['sig-id-prospect','sig-id-prop','sig-id-log','sig-id-form',
+   'sig-nom','sig-prenom','sig-tel','sig-email','sig-adresse','sig-ville-prop','sig-notes-prop',
+   'sig-nom-log','sig-adresse-log','sig-ville-log','sig-cp-log','sig-notes-log',
+   'sig-options','sig-frais','sig-promo','sig-notes-form',
+   'sig-search','sig-capacite','sig-commission'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+  ['sig-type-log','sig-mode','sig-formule'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('sig-code-wifi').value = '';
+  document.getElementById('sig-code-cle').value = '';
+  ['sig-date-debut-log','sig-date-fin-form','sig-date-debut-form'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('sig-prospect-info').style.display = 'none';
+  document.getElementById('sig-search-results').innerHTML = '';
+  document.getElementById('sig-status').textContent = '';
+  document.getElementById('sig-status').style.color = '#888';
+}
+
+function resetFiche() {
+  currentProspectId = '';
+  ['p-nom','p-prenom','p-tel','p-email','p-ville','p-commentaire'].forEach(id=>document.getElementById(id).value='');
+  ['p-type','p-statut','p-branche','p-formule'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('p-action').selectedIndex=0;
+  document.getElementById('p-date').value='';
+  document.querySelectorAll('.ftag.active').forEach(t=>t.classList.remove('active'));
+  document.getElementById('p-id-prospect').value='';
+  document.getElementById('searchResults').innerHTML='';
+  document.getElementById('searchInput').value='';
+}
+
+
+
+
+// ── AGENDA ─────────────────────────────────────────────────
+
+let agendaDate = new Date();
+let agendaVue = 'mois';
+let agendaRDVs = [];
+let rdvTypeSelectionne = 'RDV physique';
+
+const MOIS_FR = ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
+const JOURS_FR = ['Lun','Mar','Mer','Jeu','Ven','Sam','Dim'];
+
+async function chargerAgenda() {
+  const mois = agendaDate.getMonth() + 1;
+  const annee = agendaDate.getFullYear();
+  try {
+    const data = await fetchData(AGENDA_URL + '?action=getRDV&mois=' + mois + '&annee=' + annee);
+    if (data && data.success) {
+      agendaRDVs = data.rdvs || [];
+      detecterConflits();
+      if (agendaVue === 'mois') afficherMois();
+      else afficherSemaine();
+    }
+  } catch(e) {
+    agendaRDVs = [];
+    if (agendaVue === 'mois') afficherMois();
+    else afficherSemaine();
+  }
+}
+
+function detecterConflits() {
+  const parJourHeure = {};
+  agendaRDVs.forEach(rdv => {
+    if (!rdv.heure_debut) return;
+    const cle = rdv.date_iso + '_' + rdv.heure_debut;
+    if (!parJourHeure[cle]) parJourHeure[cle] = [];
+    parJourHeure[cle].push(rdv);
+  });
+  agendaRDVs.forEach(rdv => {
+    if (!rdv.heure_debut) return;
+    const cle = rdv.date_iso + '_' + rdv.heure_debut;
+    rdv.conflit = parJourHeure[cle].length > 1;
+  });
+}
+
+function afficherMois() {
+  const annee = agendaDate.getFullYear();
+  const mois = agendaDate.getMonth();
+  document.getElementById('cal-title').textContent = MOIS_FR[mois] + ' ' + annee;
+
+  const premier = new Date(annee, mois, 1);
+  const dernier = new Date(annee, mois + 1, 0);
+  let debutSemaine = premier.getDay() === 0 ? 6 : premier.getDay() - 1;
+
+  let html = '<div class="cal-header">';
+  JOURS_FR.forEach(j => html += '<div class="cal-day-name">' + j + '</div>');
+  html += '</div><div class="cal-grid">';
+
+  // Jours du mois précédent
+  const moisPrec = new Date(annee, mois, 0);
+  for (let i = debutSemaine - 1; i >= 0; i--) {
+    const jour = moisPrec.getDate() - i;
+    html += '<div class="cal-day other-month"><div class="cal-day-num">' + jour + '</div></div>';
+  }
+
+  const today = new Date(); today.setHours(0,0,0,0);
+
+  // Jours du mois
+  for (let d = 1; d <= dernier.getDate(); d++) {
+    const dateJ = new Date(annee, mois, d);
+    const dateISO = formatDateISO(dateJ);
+    const isToday = dateJ.getTime() === today.getTime();
+    const rdvsDuJour = agendaRDVs.filter(r => r.date_iso === dateISO);
+
+    html += '<div class="cal-day' + (isToday ? ' today' : '') + '" onclick="ouvrirRDVModal(null,\'' + dateISO + '\')">';
+    html += '<div class="cal-day-num">' + d + '</div>';
+
+    rdvsDuJour.slice(0,3).forEach(rdv => {
+      const cls = rdv.conflit ? 'conflit' : getEventClass(rdv.type);
+      const heure = rdv.heure_debut ? rdv.heure_debut + ' ' : '';
+      html += '<div class="cal-event ' + cls + '" onclick="event.stopPropagation();ouvrirRDVModal(\'' + rdv.id + '\')" title="' + rdv.titre + '">' + heure + rdv.titre + '</div>';
+    });
+    if (rdvsDuJour.length > 3) {
+      html += '<div style="font-size:10px;color:#85B7EB">+' + (rdvsDuJour.length - 3) + ' autres</div>';
+    }
+    html += '</div>';
+  }
+
+  // Jours du mois suivant
+  const total = debutSemaine + dernier.getDate();
+  const reste = total % 7 === 0 ? 0 : 7 - (total % 7);
+  for (let i = 1; i <= reste; i++) {
+    html += '<div class="cal-day other-month"><div class="cal-day-num">' + i + '</div></div>';
+  }
+  html += '</div>';
+  document.getElementById('cal-container').innerHTML = html;
+}
+
+function afficherSemaine() {
+  const lundi = getLundi(agendaDate);
+  const dimanche = new Date(lundi); dimanche.setDate(dimanche.getDate() + 6);
+  document.getElementById('cal-title').textContent =
+    lundi.getDate() + ' ' + MOIS_FR[lundi.getMonth()] + ' — ' +
+    dimanche.getDate() + ' ' + MOIS_FR[dimanche.getMonth()] + ' ' + dimanche.getFullYear();
+
+  const heures = ['08:00','09:00','10:00','11:00','12:00','13:00','14:00','15:00','16:00','17:00','18:00','19:00'];
+
+  let html = '<div class="week-grid">';
+  html += '<div class="week-header"></div>';
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(lundi); d.setDate(d.getDate() + i);
+    const today = new Date(); today.setHours(0,0,0,0);
+    const isToday = d.getTime() === today.getTime();
+    html += '<div class="week-header" style="' + (isToday ? 'color:#1D9E75;font-weight:700' : '') + '">' +
+      JOURS_FR[i] + ' ' + d.getDate() + '</div>';
+  }
+
+  heures.forEach(heure => {
+    html += '<div class="week-hour">' + heure + '</div>';
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(lundi); d.setDate(d.getDate() + i);
+      const dateISO = formatDateISO(d);
+      const rdvCette = agendaRDVs.filter(r => r.date_iso === dateISO && r.heure_debut === heure);
+      html += '<div class="week-cell" onclick="ouvrirRDVModal(null,\'' + dateISO + '\',\'' + heure + '\')">';
+      rdvCette.forEach(rdv => {
+        const cls = rdv.conflit ? 'conflit' : getEventClass(rdv.type);
+        html += '<div class="cal-event ' + cls + '" onclick="event.stopPropagation();ouvrirRDVModal(\'' + rdv.id + '\')">' + rdv.titre + '</div>';
+      });
+      html += '</div>';
+    }
+  });
+  html += '</div>';
+  document.getElementById('cal-container').innerHTML = html;
+}
+
+function getEventClass(type) {
+  if (!type) return 'rdv-physique';
+  const t = type.toLowerCase();
+  if (t.includes('physique')) return 'rdv-physique';
+  if (t.includes('tel') || t.includes('phone') || t.includes('visio')) return 'rdv-telephone';
+  if (t.includes('relance')) return 'relance';
+  return 'rdv-physique';
+}
+
+function getLundi(date) {
+  const d = new Date(date);
+  const day = d.getDay();
+  const diff = day === 0 ? -6 : 1 - day;
+  d.setDate(d.getDate() + diff);
+  d.setHours(0,0,0,0);
+  return d;
+}
+
+function formatDateISO(d) {
+  const y = d.getFullYear();
+  const m = String(d.getMonth()+1).padStart(2,'0');
+  const j = String(d.getDate()).padStart(2,'0');
+  return y + '-' + m + '-' + j;
+}
+
+function naviguerAgenda(direction) {
+  if (agendaVue === 'mois') {
+    agendaDate.setMonth(agendaDate.getMonth() + direction);
+  } else {
+    agendaDate.setDate(agendaDate.getDate() + (direction * 7));
+  }
+  chargerAgenda();
+}
+
+function setVue(vue) {
+  agendaVue = vue;
+  document.getElementById('btn-mois').classList.toggle('active', vue === 'mois');
+  document.getElementById('btn-semaine').classList.toggle('active', vue === 'semaine');
+  chargerAgenda();
+}
+
+function ouvrirRDVModal(id, dateISO, heure) {
+  const modal = document.getElementById('rdvModal');
+  document.getElementById('rdv-conflit-msg').style.display = 'none';
+
+  if (id) {
+    // Mode modification
+    const rdv = agendaRDVs.find(r => r.id === id);
+    if (!rdv || rdv.depuis_prospect) return;
+    document.getElementById('rdvModalTitle').textContent = 'Modifier le RDV';
+    document.getElementById('rdv-id').value = rdv.id;
+    document.getElementById('rdv-titre').value = rdv.titre;
+    document.getElementById('rdv-date').value = rdv.date_iso;
+    document.getElementById('rdv-heure-debut').value = rdv.heure_debut || '09:00';
+    document.getElementById('rdv-heure-fin').value = rdv.heure_fin || '09:30';
+    document.getElementById('rdv-notes').value = rdv.notes || '';
+    document.getElementById('rdv-type').value = rdv.type || 'RDV physique';
+    rdvTypeSelectionne = rdv.type || 'RDV physique';
+    document.getElementById('rdv-delete-btn').style.display = 'block';
+    if (rdv.conflit) {
+      document.getElementById('rdv-conflit-msg').style.display = 'block';
+      document.getElementById('rdv-conflit-msg').textContent = '⚠️ Conflit détecté à cette heure';
+    }
+  } else {
+    // Mode création
+    document.getElementById('rdvModalTitle').textContent = 'Nouveau RDV';
+    document.getElementById('rdv-id').value = '';
+    document.getElementById('rdv-titre').value = '';
+    document.getElementById('rdv-date').value = dateISO || '';
+    document.getElementById('rdv-heure-debut').value = heure || '09:00';
+    document.getElementById('rdv-heure-fin').value = heure ? incrementerHeure(heure) : '09:30';
+    document.getElementById('rdv-notes').value = '';
+    document.getElementById('rdv-type').value = 'RDV physique';
+    rdvTypeSelectionne = 'RDV physique';
+    document.getElementById('rdv-delete-btn').style.display = 'none';
+  }
+
+  // Reset type buttons
+  document.querySelectorAll('.type-btn').forEach(b => {
+    b.className = 'type-btn';
+    if (b.textContent.trim() === rdvTypeSelectionne) b.classList.add('selected-' + getEventClass(rdvTypeSelectionne));
+  });
+
+  modal.classList.add('show');
+  document.getElementById('rdv-titre').focus();
+}
+
+function fermerRDVModal() {
+  document.getElementById('rdvModal').classList.remove('show');
+}
+
+function selectType(btn, type) {
+  rdvTypeSelectionne = type;
+  document.getElementById('rdv-type').value = type;
+  document.querySelectorAll('.type-btn').forEach(b => b.className = 'type-btn');
+  btn.classList.add('selected-' + getEventClass(type));
+}
+
+function incrementerHeure(heure) {
+  const parts = heure.split(':');
+  let h = parseInt(parts[0]);
+  let m = parseInt(parts[1]) + 30;
+  if (m >= 60) { h++; m -= 60; }
+  return String(h).padStart(2,'0') + ':' + String(m).padStart(2,'0');
+}
+
+async function sauvegarderRDV() {
+  const id = document.getElementById('rdv-id').value;
+  const params = new URLSearchParams({
+    titre: document.getElementById('rdv-titre').value,
+    date: document.getElementById('rdv-date').value,
+    heure_debut: document.getElementById('rdv-heure-debut').value,
+    heure_fin: document.getElementById('rdv-heure-fin').value,
+    type: document.getElementById('rdv-type').value,
+    notes: document.getElementById('rdv-notes').value,
+    commercial: getCommercial().nom
+  });
+
+  if (!params.get('titre') || !params.get('date')) {
+    alert('Merci de renseigner au minimum un titre et une date.');
+    return;
+  }
+
+  try {
+    const action = id ? 'updateRDV' : 'saveRDV';
+    if (id) params.append('id', id);
+    const resp = await fetch(AGENDA_URL + '?action=' + action + '&' + params.toString());
+    const data = await resp.json();
+    if (data.conflits && data.conflits.length > 0) {
+      document.getElementById('rdv-conflit-msg').style.display = 'block';
+      document.getElementById('rdv-conflit-msg').textContent = '⚠️ Conflit avec : ' + data.conflits.map(c => c.titre).join(', ');
+    }
+    fermerRDVModal();
+    chargerAgenda();
+  } catch(e) {
+    fermerRDVModal();
+    chargerAgenda();
+  }
+}
+
+async function supprimerRDV() {
+  const id = document.getElementById('rdv-id').value;
+  if (!id) return;
+  if (!confirm('Supprimer ce RDV ?')) return;
+  try {
+    new Image().src = AGENDA_URL + '?action=deleteRDV&id=' + encodeURIComponent(id);
+    await new Promise(r => setTimeout(r, 1000));
+  } catch(e) {}
+  fermerRDVModal();
+  chargerAgenda();
+}
+
+// ── TABLEAU DE BORD ────────────────────────────────────────
+
+async function chargerDashboard() {
+  // Date du jour
+  const now = new Date();
+  const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+  document.getElementById('db-date').textContent = now.toLocaleDateString('fr-FR', options);
+
+  try {
+    const data = await fetchData(DASHBOARD_URL + '?action=getDashboard');
+    if (!data || !data.success) throw new Error('Erreur');
+
+    const d = data.dashboard;
+
+    // Métriques
+    document.getElementById('db-total').textContent = d.total || 0;
+    document.getElementById('db-relances-today').textContent = d.relances_today || 0;
+    document.getElementById('db-rdv-week').textContent = d.rdv_week || 0;
+    document.getElementById('db-convertis').textContent = d.convertis || 0;
+
+    // Alertes relances
+    const alertesEl = document.getElementById('db-alertes');
+    if (d.alertes && d.alertes.length > 0) {
+      alertesEl.innerHTML = d.alertes.map(p => `
+        <div style="background:#0C447C;border:1px solid #F09595;border-left:3px solid #E24B4A;border-radius:8px;padding:10px 14px;margin-bottom:6px;display:flex;justify-content:space-between;align-items:center">
+          <div>
+            <div style="font-size:13px;font-weight:500">${p.nom} ${p.prenom}</div>
+            <div style="font-size:11px;color:#85B7EB;margin-top:2px">${p.telephone} · ${p.action}</div>
+          </div>
+          <div style="text-align:right">
+            <div style="font-size:12px;font-weight:500;color:#E24B4A">${p.date_relance}</div>
+            <div style="font-size:11px;color:#85B7EB">${p.statut}</div>
+          </div>
+        </div>
+      `).join('');
+    } else {
+      alertesEl.innerHTML = '<div style="font-size:13px;color:#1D9E75;text-align:center;padding:12px">✓ Aucune relance urgente</div>';
+    }
+
+    // RDV à venir
+    const rdvEl = document.getElementById('db-rdv');
+    if (d.rdv && d.rdv.length > 0) {
+      rdvEl.innerHTML = d.rdv.map(p => `
+        <div style="background:#0C447C;border:1px solid #378ADD;border-left:3px solid #185FA5;border-radius:8px;padding:10px 14px;margin-bottom:6px;display:flex;justify-content:space-between;align-items:center">
+          <div>
+            <div style="font-size:13px;font-weight:500">${p.nom} ${p.prenom}</div>
+            <div style="font-size:11px;color:#85B7EB;margin-top:2px">${p.telephone} · ${p.formule}</div>
+          </div>
+          <div style="text-align:right">
+            <div style="font-size:12px;font-weight:500;color:#185FA5">${p.date_rdv}</div>
+            <div style="font-size:11px;color:#85B7EB">${p.type_rdv || 'RDV'}</div>
+          </div>
+        </div>
+      `).join('');
+    } else {
+      rdvEl.innerHTML = '<div style="font-size:13px;color:#85B7EB;text-align:center;padding:12px">Aucun RDV planifié</div>';
+    }
+
+    // Statuts pipeline
+    const statutsEl = document.getElementById('db-statuts');
+    if (d.par_statut) {
+      const colors = {'Nouveau':'#1D9E75','En réflexion':'#BA7517','À relancer':'#378ADD','RDV prévu':'#534AB7','Signé':'#0F6E56'};
+      statutsEl.innerHTML = Object.entries(d.par_statut).map(([k,v]) => `
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+          <div style="display:flex;align-items:center;gap:8px">
+            <div style="width:8px;height:8px;border-radius:50%;background:${colors[k]||'#aaa'}"></div>
+            <span style="font-size:12px;color:#B5D4F4">${k}</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <div style="height:6px;border-radius:3px;background:${colors[k]||'#aaa'};opacity:0.3;width:${Math.min(v*8,80)}px"></div>
+            <span style="font-size:12px;font-weight:500;color:#fff;min-width:20px;text-align:right">${v}</span>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    // Formules
+    const formulesEl = document.getElementById('db-formules');
+    if (d.par_formule) {
+      const colors = {'Essentielle':'#1D9E75','Confort':'#185FA5','Premium':'#534AB7','Sérénité':'#BA7517'};
+      formulesEl.innerHTML = Object.entries(d.par_formule).map(([k,v]) => `
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+          <div style="display:flex;align-items:center;gap:8px">
+            <div style="width:8px;height:8px;border-radius:50%;background:${colors[k]||'#aaa'}"></div>
+            <span style="font-size:12px;color:#B5D4F4">${k}</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <div style="height:6px;border-radius:3px;background:${colors[k]||'#aaa'};opacity:0.3;width:${Math.min(v*8,80)}px"></div>
+            <span style="font-size:12px;font-weight:500;color:#fff;min-width:20px;text-align:right">${v}</span>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    // Derniers prospects
+    const recentsEl = document.getElementById('db-recents');
+    if (d.recents && d.recents.length > 0) {
+      recentsEl.innerHTML = d.recents.map(p => `
+        <div style="background:#0C447C;border:1px solid #185FA5;border-radius:8px;padding:10px 14px;margin-bottom:6px;display:flex;justify-content:space-between;align-items:center">
+          <div>
+            <div style="font-size:13px;font-weight:500">${p.nom} ${p.prenom}</div>
+            <div style="font-size:11px;color:#85B7EB;margin-top:2px">${p.ville||''} · ${p.profil||''}</div>
+          </div>
+          <div style="text-align:right">
+            <div style="font-size:11px;padding:2px 8px;border-radius:10px;background:transparent;color:#EF9F27;font-weight:600;border:1px solid #EF9F27">${p.statut}</div>
+            <div style="font-size:11px;color:#85B7EB;margin-top:3px">${p.date}</div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+  } catch(e) {
+    document.getElementById('db-alertes').innerHTML = '<div style="font-size:13px;color:#E24B4A;text-align:center;padding:12px">Erreur de connexion — vérifiez votre connexion internet</div>';
+    document.getElementById('db-rdv').innerHTML = '';
+    // Afficher quand même la date
+  }
+}
+
+// ── GESTION COMMERCIAL ─────────────────────────────────────
+
+function initCommercial() {
+  const nom = localStorage.getItem('mp_commercial_nom');
+  const email = localStorage.getItem('mp_commercial_email');
+  if (!nom || !email) {
+    document.getElementById('modalCommercial').classList.add('show');
+  } else {
+    document.getElementById('commercialDisplay').textContent = nom;
+  const initial = nom.trim().charAt(0).toUpperCase();
+  if(document.getElementById('topbarAvatar')) document.getElementById('topbarAvatar').textContent = initial;
+  }
+}
+
+function sauvegarderCommercial() {
+  const nom = document.getElementById('commercialNom').value.trim();
+  const email = document.getElementById('commercialEmail').value.trim();
+  if (!nom) { alert('Merci de renseigner votre nom.'); return; }
+  if (!email) email = 'mapoppin@outlook.fr';
+  localStorage.setItem('mp_commercial_nom', nom);
+  localStorage.setItem('mp_commercial_email', email);
+  document.getElementById('commercialDisplay').textContent = nom;
+  const initial = nom.trim().charAt(0).toUpperCase();
+  if(document.getElementById('topbarAvatar')) document.getElementById('topbarAvatar').textContent = initial;
+  document.getElementById('modalCommercial').classList.remove('show');
+}
+
+function demanderCommercial() {
+  const nom = localStorage.getItem('mp_commercial_nom') || '';
+  const email = localStorage.getItem('mp_commercial_email') || '';
+  document.getElementById('commercialNom').value = nom;
+  document.getElementById('commercialEmail').value = email;
+  document.getElementById('modalCommercial').classList.add('show');
+}
+
+function getCommercial() {
+  return {
+    nom: localStorage.getItem('mp_commercial_nom') || '',
+    email: localStorage.getItem('mp_commercial_email') || ''
+  };
+}
+
+function show(el, name) {
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  el.classList.add('active');
+  document.querySelectorAll('.fiche').forEach(f=>f.classList.remove('active'));
+  document.getElementById('f-'+name).classList.add('active');
+  window.scrollTo(0,0);
+  if (name === 'dashboard') chargerDashboard();
+  if (name === 'agenda') chargerAgenda();
+}
+</script>
+</body>
+</html>
